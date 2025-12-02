@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PMS - Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-root">
+    <aside class="sidebar">
+      <div class="brand">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M12 2L2 7v7c0 5 4 9 10 9s10-4 10-9V7L12 2z" fill="#fff"/></svg>
+        <h2>PMS Sapantiana</h2>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item active">Dashboard</button>
+        <button class="nav-item">Calendario</button>
+        <button class="nav-item">Propiedades</button>
+        <button class="nav-item">Usuarios</button>
+        <button class="nav-item" id="logoutBtn">Cerrar sesión</button>
+      </nav>
+
+      <div class="sidebar-footer muted">Conectado como <strong>admin</strong></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="top-left">
+          <h1>Calendario de Reservas</h1>
+          <p class="muted">Vista mockup — sincronización OTAs (Airbnb, Booking, Expedia)</p>
+        </div>
+        <div class="top-right">
+          <div class="kpi">
+            <div>Reservas hoy</div><div class="kpi-value">4</div>
+          </div>
+        </div>
+      </header>
+
+      <section class="controls">
+        <div class="channels">
+          <button class="chip active">Airbnb</button>
+          <button class="chip active">Booking</button>
+          <button class="chip">Expedia</button>
+          <button class="chip">Directo</button>
+        </div>
+        <div class="legend">
+          <span class="legend-dot bg-blue"></span> Confirmada
+          <span class="legend-dot bg-orange"></span> Pendiente
+        </div>
+      </section>
+
+      <section class="timeline-area" id="timelineArea">
+        <div class="timeline-header" id="timelineHeader"></div>
+        <div class="timeline-body-wrapper" id="timelineWrapper">
+          <div class="timeline-grid" id="timelineGrid"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Modal placeholder -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <h3 id="modalTitle">Reserva</h3>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
