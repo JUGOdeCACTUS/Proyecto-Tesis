@@ -1,0 +1,81 @@
+/* PANEL DE HABITACIONES */
+.rooms-panel {
+  width: 220px;
+  background: white;
+  border-right: 1px solid #e5e7eb;
+  overflow-y: auto;
+}
+
+.room-cell {
+  min-height: 60px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+  font-weight: 500;
+}
+
+/* CALENDARIO */
+.calendar-container {
+  flex: 1;
+  overflow: auto;
+  background: #fff;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(31, 120px);
+}
+
+.cal-day {
+  border-bottom: 1px solid #e5e7eb;
+  border-right: 1px solid #f3f4f6;
+  height: 60px;
+  position: relative;
+}
+
+/* EVENTOS */
+.event-block {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  height: 44px;
+  border-radius: 6px;
+  color: white;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 5;
+}
+
+/* Colores OTA */
+.event-airbnb { background: #FF5A5F; }
+.event-booking { background: #003580; }
+.event-expedia { background: #FEC601; color: black; }
+
+/* CHIPS */
+.chip-airbnb {
+  background: #FF5A5F;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.chip-booking {
+  background: #003580;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.chip-expedia {
+  background: #FEC601;
+  color: black;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+}

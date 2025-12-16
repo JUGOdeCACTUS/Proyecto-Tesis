@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PMS - Dashboard</title>
+
+  <!-- Fuente -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Tus estilos -->
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+
+<body class="bg-gray-100 font-inter">
+
+  <div class="flex">
+
+    <!-- Sidebar -->
+    <aside class="sidebar w-64 h-screen bg-gray-900 text-white flex flex-col">
+      
+      <div class="brand flex items-center space-x-3 p-4 text-xl font-bold">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L2 7v7c0 5 4 9 10 9s10-4 10-9V7L12 2z" fill="#fff"/>
+        </svg>
+        <h2>PMS Sapantiana</h2>
+      </div>
+
+      <nav class="mt-6 flex-1">
+        <button class="nav-item active w-full text-left px-6 py-3 bg-gray-800">Dashboard</button>
+        <button class="nav-item w-full text-left px-6 py-3 hover:bg-gray-800">Calendario</button>
+        <button class="nav-item w-full text-left px-6 py-3 hover:bg-gray-800">Propiedades</button>
+        <button class="nav-item w-full text-left px-6 py-3 hover:bg-gray-800">Usuarios</button>
+      </nav>
+
+      <div class="sidebar-footer text-sm px-6 py-4 bg-gray-800">
+        Conectado como <strong>admin</strong>
+      </div>
+    </aside>
+
+    <!-- MAIN AREA -->
+    <main class="flex-1 h-screen overflow-hidden">
+
+      <!-- Header -->
+      <header class="p-6 bg-white border-b">
+        <h1 class="text-2xl font-bold">Calendario de Reservas</h1>
+        <p class="text-gray-500">Sincronización en tiempo real con Airbnb · Booking · Expedia</p>
+      </header>
+
+      <!-- Controls -->
+      <section class="p-4 flex items-center justify-between bg-white border-b">
+        <div class="space-x-2">
+          <span class="chip-airbnb">Airbnb</span>
+          <span class="chip-booking">Booking</span>
+          <span class="chip-expedia">Expedia</span>
+        </div>
+      </section>
+
+      <!-- MULTICALENDARIO -->
+      <section class="flex h-[calc(100vh-180px)]">
+
+        <!-- Panel de habitaciones -->
+        <div class="rooms-panel">
+          <div class="room-cell">Habitación 101</div>
+          <div class="room-cell">Habitación 102</div>
+          <div class="room-cell">Suite Familiar</div>
+          <div class="room-cell">Doble Deluxe</div>
+          <div class="room-cell">Matrimonial</div>
+        </div>
+
+        <!-- Calendario -->
+        <div class="calendar-container">
+
+          <!-- Encabezado días -->
+          <div class="calendar-grid bg-white sticky top-0 z-10 border-b" id="calendarHeader"></div>
+
+          <!-- Celdas -->
+          <div class="calendar-grid" id="calendarBody"></div>
+
+        </div>
+
+      </section>
+
+    </main>
+  </div>
+
+  <!-- JS -->
+  <script src="js/dashboard.js"></script>
+
+</body>
+</html>

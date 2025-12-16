@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Calendar: Priority Mode</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+
+    <style>
+        :root {
+            --booking: #003580;
+            --expedia: #FFC627;
+            --airbnb:  #FF5A5F;
+            --bg-body: #f1f5f9;
+            --surface: #ffffff;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- Panel de Control --- */
+        .control-panel {
+            background: var(--surface);
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .priority-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f8fafc;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        select {
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            font-weight: bold;
+        }
+
+        .upload-btn {
+            background: #0f172a;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Alerta de Conflictos */
+        .conflict-alert {
+            background-color: #fee2e2;
+            color: #991b1b;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: none; /* Oculto por defecto */
+            align-items: center;
+            gap: 10px;
+            border: 1px solid #fecaca;
+        }
+
+        #calendar {
+            background: var(--surface);
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
+            border-radius: 12px;
+            min-height: 800px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+        }
+
+        /* Estilos de Eventos */
+        .fc-event { border: none !important; border-radius: 4px; box-shadow: 0 2px 3px rgba(0,0,0,0.1); }
+        .bg-booking { background-color: var(--booking) !important; color: white; }
+        .bg-expedia { background-color: var(--expedia) !important; color: #333; }
+        .bg-airbnb { background-color: var(--airbnb) !important; color: white; }
+
+    </style>
+</head>
+<body>
+
+    <div class="control-panel">
+        <div>
+            <h2 style="margin:0; font-size:1.2rem;">Modo Prioridad</h2>
+            <p style="margin:5px 0 0 0; color:#64748b; font-size:0.9rem;">Resuelve overbookings automáticamente</p>
+        </div>
+
+        <div class="priority-box">
+            <span>👑 Prioridad Alta (Gana):</span>
+            <select id="kingSelect">
+                <option value="Airbnb">Airbnb</option>
+                <option value="Booking">Booking.com</option>
+                <option value="Expedia">Expedia</option>
+            </select>
+        </div>
+
+        <div id="conflictMsg" class="conflict-alert">
+            ⚠️ <strong><span id="conflictCount">0</span> Días en conflicto</strong> resueltos a favor del Rey.
+        </div>
+
+        <label class="upload-btn">
+            📂 Cargar Calendarios
+            <input type="file" id="fileInput" accept=".ics" multiple style="display:none">
+        </label>
+    </div>
+
+    <div id="calendar"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var kingSelect = document.getElementById('kingSelect');
+            
+            // Variables para guardar datos crudos y reprocesarlos si cambia la prioridad
+            var rawEventsBuffer = []; 
+
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'es',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'multiMonthYear,dayGridMonth'
+                },
+                views: { multiMonthYear: { buttonText: 'Año Completo' } }
+            });
+            calendar.render();
+
+            // 1. Al cargar archivos
+            document.getElementById('fileInput').addEventListener('change', function(e) {
+                var files = Array.from(e.target.files);
+                if (!files.length) return;
+
+                rawEventsBuffer = []; // Limpiar buffer
+                var filesRead = 0;
+
+                files.forEach(file => {
+                    var reader = new FileReader();
+                    reader.onload = function(evt) {
+                        var type = detectType(file.name);
+                        var parsed = parseICS(evt.target.result, type);
+                        // Guardamos todo en el buffer crudo
+                        rawEventsBuffer = rawEventsBuffer.concat(parsed);
+                        
+                        filesRead++;
+                        // Cuando terminamos de leer TODOS los archivos, procesamos la prioridad
+                        if(filesRead === files.length) {
+                            applyPriorityAndRender();
+                        }
+                    };
+                    reader.readAsText(file);
+                });
+            });
+
+            // 2. Al cambiar el Rey (Prioridad)
+            kingSelect.addEventListener('change', function() {
+                if(rawEventsBuffer.length > 0) {
+                    applyPriorityAndRender();
+                }
+            });
+
+            // --- Lógica de Prioridad ---
+            function applyPriorityAndRender() {
+                var king = kingSelect.value; // 'Airbnb', 'Booking' o 'Expedia'
+                
+                // Mapa de días: "2025-12-01" -> { owner: 'Airbnb', priority: 10 }
+                var dayMap = {};
+                var conflictDays = 0;
+
+                // Definir pesos: El Rey tiene 100, los demás 1
+                // Si quieres jerarquía compleja: Airbnb=3, Booking=2, Expedia=1
+                var getWeight = (name) => name === king ? 100 : 1;
+
+                // A. Llenar el Mapa (La Guerra de Píxeles)
+                rawEventsBuffer.forEach(ev => {
+                    var current = new Date(ev.start);
+                    var end = new Date(ev.end);
+                    var weight = getWeight(ev.source);
+
+                    while (current < end) {
+                        var dateStr = current.toISOString().split('T')[0];
+                        
+                        if (!dayMap[dateStr]) {
+                            // Si está libre, lo tomo
+                            dayMap[dateStr] = { source: ev.source, cls: ev.cls, w: weight };
+                        } else {
+                            // CONFLICTO: Ya está ocupado
+                            if (weight > dayMap[dateStr].w) {
+                                // Soy más fuerte (Soy el Rey), te reemplazo
+                                dayMap[dateStr] = { source: ev.source, cls: ev.cls, w: weight };
+                                conflictDays++; // Contamos que hubo una "batalla"
+                            } else if (weight === dayMap[dateStr].w && ev.source !== dayMap[dateStr].source) {
+                                // Mismo peso, diferente fuente (Overbooking real sin Rey claro). 
+                                // Estrategia: El último archivo cargado gana o marcamos ambos?
+                                // Por simpleza, dejamos el primero que llegó.
+                                conflictDays++;
+                            }
+                        }
+                        current.setDate(current.getDate() + 1);
+                    }
+                });
+
+                // B. Reconstruir Eventos (Unir días adyacentes del mismo dueño)
+                var finalEvents = reconstructEvents(dayMap);
+
+                // C. Renderizar
+                calendar.removeAllEvents();
+                finalEvents.forEach(ev => calendar.addEvent(ev));
+
+                // Mostrar Alerta
+                var alertBox = document.getElementById('conflictMsg');
+                var countSpan = document.getElementById('conflictCount');
+                if (conflictDays > 0) {
+                    alertBox.style.display = 'flex';
+                    countSpan.innerText = conflictDays;
+                } else {
+                    alertBox.style.display = 'none';
+                }
+            }
+
+            // Función auxiliar para unir días sueltos en barras
+            function reconstructEvents(dayMap) {
+                var sortedDates = Object.keys(dayMap).sort();
+                var events = [];
+                if (sortedDates.length === 0) return [];
+
+                var currentRange = null;
+
+                sortedDates.forEach((dateStr, index) => {
+                    var data = dayMap[dateStr];
+                    var dateObj = new Date(dateStr);
+
+                    if (!currentRange) {
+                        // Iniciar nuevo rango
+                        currentRange = { start: dateStr, end: dateStr, ...data };
+                    } else {
+                        // Chequear si es consecutivo y del mismo dueño
+                        var prevDate = new Date(currentRange.end);
+                        prevDate.setDate(prevDate.getDate() + 1);
+                        var nextDateStr = prevDate.toISOString().split('T')[0];
+
+                        if (dateStr === nextDateStr && data.source === currentRange.source) {
+                            // Extender rango
+                            currentRange.end = dateStr;
+                        } else {
+                            // Cerrar rango anterior y guardar
+                            events.push(finalizeEvent(currentRange));
+                            // Iniciar nuevo
+                            currentRange = { start: dateStr, end: dateStr, ...data };
+                        }
+                    }
+                });
+                if (currentRange) events.push(finalizeEvent(currentRange));
+                return events;
+            }
+
+            function finalizeEvent(range) {
+                // FullCalendar el 'end' es exclusivo (el día siguiente a las 00:00)
+                var endDate = new Date(range.end);
+                endDate.setDate(endDate.getDate() + 1);
+                return {
+                    title: range.source,
+                    start: range.start,
+                    end: endDate.toISOString().split('T')[0],
+                    classNames: [range.cls],
+                    allDay: true
+                };
+            }
+
+            // --- Parsers ---
+            function detectType(name) {
+                var n = name.toLowerCase();
+                if (n.includes('airbnb')) return { name: 'Airbnb', cls: 'bg-airbnb' };
+                if (n.includes('booking')) return { name: 'Booking', cls: 'bg-booking' };
+                if (n.includes('expedia')) return { name: 'Expedia', cls: 'bg-expedia' };
+                return { name: 'Bloqueado', cls: 'bg-secondary' };
+            }
+
+            function parseICS(str, type) {
+                var events = [];
+                var lines = str.split(/\r\n|\n|\r/);
+                var inEvent = false, current = {};
+
+                lines.forEach(line => {
+                    if (line.startsWith('BEGIN:VEVENT')) { inEvent = true; current = {}; }
+                    else if (line.startsWith('END:VEVENT')) {
+                        inEvent = false;
+                        if (current.start && current.end) {
+                            events.push({
+                                source: type.name,
+                                start: parseDate(current.start),
+                                end: parseDate(current.end),
+                                cls: type.cls
+                            });
+                        }
+                    } else if (inEvent) {
+                        if (line.startsWith('DTSTART')) current.start = line;
+                        if (line.startsWith('DTEND')) current.end = line;
+                    }
+                });
+                return events;
+            }
+
+            function parseDate(line) {
+                var part = line.split(':')[1] || '';
+                if (part.includes('T')) part = part.split('T')[0];
+                if (part.length === 8) {
+                    return `${part.substring(0,4)}-${part.substring(4,6)}-${part.substring(6,8)}`;
+                }
+                return null;
+            }
+        });
+    </script>
+</body>
+</html>
